@@ -81,13 +81,15 @@ export function parseRpt(text: string): RptDocument {
     }
   }
 
-  if (blocks.length === 0) {
+  const hasBannerBlock = blocks.some((b) => b.title !== "Header");
+  if (blocks.length === 0 || !hasBannerBlock) {
     issues.push({
       severity: "error",
       line: 0,
       message: "No report blocks found — file does not look like a SWMM .rpt.",
     });
   }
+
 
   return { blocks, summaries, errors, warnings, issues };
 }
