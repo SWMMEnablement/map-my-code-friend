@@ -114,13 +114,15 @@ export function parseInp(text: string): InpDocument {
   }
   flush();
 
-  if (order.length === 0) {
+  const realSections = order.filter((n) => n !== "__PREAMBLE__");
+  if (realSections.length === 0) {
     issues.push({
       severity: "error",
       line: 0,
       message: "No [SECTION] headers found — file does not look like a SWMM .inp.",
     });
   }
+
 
   return { sections, order, warnings, issues };
 }
