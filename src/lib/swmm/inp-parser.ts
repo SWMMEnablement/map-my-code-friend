@@ -1,4 +1,4 @@
-import type { InpDocument, InpSection } from "./types";
+import type { InpDocument, InpSection, ParseIssue } from "./types";
 
 const SECTION_RE = /^\s*\[([A-Z0-9_ ]+)\]\s*$/i;
 
@@ -15,6 +15,7 @@ function tokenize(line: string): string[] {
 
 export function parseInp(text: string): InpDocument {
   const warnings: string[] = [];
+  const issues: ParseIssue[] = [];
   const order: string[] = [];
   const sections: Record<string, InpSection> = {};
 
@@ -34,13 +35,17 @@ export function parseInp(text: string): InpDocument {
   };
 
   const lines = text.split(/\r?\n/);
-  for (const line of lines) {
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+    const line = lines[lineIdx];
+    const lineNo = lineIdx + 1;
     const sectionMatch = line.match(SECTION_RE);
     if (sectionMatch) {
       flush();
       const name = sectionMatch[1].trim().toUpperCase();
       if (sections[name]) {
-        warnings.push(`Duplicate section [${name}] — later occurrence merged.`);
+        const msg = `Duplicate section [${name}] at line ${lineNo} — later occurrence merged.`;
+        warnings.push(msg);
+        issues.push({ severity: "warning", line: lineNo, message: msg });
         current = sections[name];
         rawBuffer = [current.raw];
       } else {
@@ -51,7 +56,6 @@ export function parseInp(text: string): InpDocument {
     }
 
     if (!current) {
-      // Pre-section preamble — keep as a synthetic TITLE-ish block only if non-empty.
       if (line.trim()) {
         if (!sections.__PREAMBLE__) {
           sections.__PREAMBLE__ = { name: "__PREAMBLE__", rows: [], raw: "" };
@@ -72,7 +76,6 @@ export function parseInp(text: string): InpDocument {
     }
 
     if (trimmed.startsWith(";")) {
-      // `;;Header line` — strip leading semicolons for column hints.
       lastCommentLine = trimmed.replace(/^;+/, "").trim();
       continue;
     }
@@ -83,12 +86,41 @@ export function parseInp(text: string): InpDocument {
 
     if (!current.columns && lastCommentLine) {
       const cols = tokenize(lastCommentLine);
-      if (cols.length > 0) current.columns = cols;
+      if (cols.length > 0) {
+        current.columns = cols;
+        // If a previous row in this section had a different column count,
+        // surface it as a soft warning.
+        const prior = current.rows[0];
+        if (prior && prior.length !== cols.length) {
+          issues.push({
+            severity: "warning",
+            line: lineNo,
+            message: `Section [${current.name}] row has ${prior.length} columns but header declares ${cols.length}.`,
+          });
+        }
+      }
       lastCommentLine = null;
     }
+
+    if (current.columns && tokens.length !== current.columns.length) {
+      issues.push({
+        severity: "warning",
+        line: lineNo,
+        message: `Section [${current.name}] row has ${tokens.length} columns, expected ${current.columns.length}.`,
+      });
+    }
+
     current.rows.push(tokens);
   }
   flush();
 
-  return { sections, order, warnings };
+  if (order.length === 0) {
+    issues.push({
+      severity: "error",
+      line: 0,
+      message: "No [SECTION] headers found — file does not look like a SWMM .inp.",
+    });
+  }
+
+  return { sections, order, warnings, issues };
 }

@@ -1,4 +1,4 @@
-import type { RptBlock, RptDocument } from "./types";
+import type { ParseIssue, RptBlock, RptDocument } from "./types";
 
 // SWMM5 .rpt files separate sections with a banner of asterisks:
 //   ****************
@@ -47,18 +47,25 @@ export function parseRpt(text: string): RptDocument {
     blocks.push({ title, body: bodyLines.join("\n").trimEnd() });
   }
 
+  const issues: ParseIssue[] = [];
   for (const block of blocks) {
     const lowered = block.title.toLowerCase();
     if (lowered.includes("error")) {
       for (const line of block.body.split(/\r?\n/)) {
         const t = line.trim();
-        if (t.toUpperCase().startsWith("ERROR")) errors.push(t);
+        if (t.toUpperCase().startsWith("ERROR")) {
+          errors.push(t);
+          issues.push({ severity: "error", line: 0, message: t });
+        }
       }
     }
     if (lowered.includes("warning")) {
       for (const line of block.body.split(/\r?\n/)) {
         const t = line.trim();
-        if (t.toUpperCase().startsWith("WARNING")) warnings.push(t);
+        if (t.toUpperCase().startsWith("WARNING")) {
+          warnings.push(t);
+          issues.push({ severity: "warning", line: 0, message: t });
+        }
       }
     }
   }
@@ -74,7 +81,15 @@ export function parseRpt(text: string): RptDocument {
     }
   }
 
-  return { blocks, summaries, errors, warnings };
+  if (blocks.length === 0) {
+    issues.push({
+      severity: "error",
+      line: 0,
+      message: "No report blocks found — file does not look like a SWMM .rpt.",
+    });
+  }
+
+  return { blocks, summaries, errors, warnings, issues };
 }
 
 // Two-column "Label .... Value" pairs common in SWMM continuity / options blocks.
