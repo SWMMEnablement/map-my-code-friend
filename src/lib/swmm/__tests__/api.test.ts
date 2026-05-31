@@ -19,10 +19,9 @@ const postRpt = getPost(RptRoute);
 
 function multipart(filename: string, body: Uint8Array | string): Request {
   const form = new FormData();
-  const blob =
-    typeof body === "string"
-      ? new Blob([body], { type: "text/plain" })
-      : new Blob([body]);
+  const part: BlobPart =
+    typeof body === "string" ? body : new Uint8Array(body).buffer as ArrayBuffer;
+  const blob = new Blob([part]);
   form.append("file", new File([blob], filename));
   return new Request("http://test.local/api/swmm/inp", {
     method: "POST",
