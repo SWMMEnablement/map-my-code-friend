@@ -86,10 +86,13 @@ function InpView({ doc }: { doc: InpDocument }) {
   return (
     <div className="mt-8 space-y-4">
       <h2 className="text-lg font-semibold">Sections ({doc.order.length})</h2>
-      {doc.warnings.length > 0 && (
-        <ul className="text-sm text-amber-700">
-          {doc.warnings.map((w, i) => (
-            <li key={i}>⚠ {w}</li>
+      {doc.issues.length > 0 && (
+        <ul className="text-sm">
+          {doc.issues.map((iss, i) => (
+            <li key={i} className={iss.severity === "error" ? "text-red-600" : "text-amber-700"}>
+              {iss.severity === "error" ? "✖" : "⚠"} {iss.line ? `line ${iss.line}: ` : ""}
+              {iss.message}
+            </li>
           ))}
         </ul>
       )}
