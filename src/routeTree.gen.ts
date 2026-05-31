@@ -9,38 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as InpAnalyzerRouteImport } from './routes/inp-analyzer'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiSwmmRptRouteImport } from './routes/api/swmm/rpt'
+import { Route as ApiSwmmInpRouteImport } from './routes/api/swmm/inp'
 
+const InpAnalyzerRoute = InpAnalyzerRouteImport.update({
+  id: '/inp-analyzer',
+  path: '/inp-analyzer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSwmmRptRoute = ApiSwmmRptRouteImport.update({
+  id: '/api/swmm/rpt',
+  path: '/api/swmm/rpt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSwmmInpRoute = ApiSwmmInpRouteImport.update({
+  id: '/api/swmm/inp',
+  path: '/api/swmm/inp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/inp-analyzer': typeof InpAnalyzerRoute
+  '/api/swmm/inp': typeof ApiSwmmInpRoute
+  '/api/swmm/rpt': typeof ApiSwmmRptRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/inp-analyzer': typeof InpAnalyzerRoute
+  '/api/swmm/inp': typeof ApiSwmmInpRoute
+  '/api/swmm/rpt': typeof ApiSwmmRptRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/inp-analyzer': typeof InpAnalyzerRoute
+  '/api/swmm/inp': typeof ApiSwmmInpRoute
+  '/api/swmm/rpt': typeof ApiSwmmRptRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/inp-analyzer' | '/api/swmm/inp' | '/api/swmm/rpt'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/inp-analyzer' | '/api/swmm/inp' | '/api/swmm/rpt'
+  id: '__root__' | '/' | '/inp-analyzer' | '/api/swmm/inp' | '/api/swmm/rpt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  InpAnalyzerRoute: typeof InpAnalyzerRoute
+  ApiSwmmInpRoute: typeof ApiSwmmInpRoute
+  ApiSwmmRptRoute: typeof ApiSwmmRptRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/inp-analyzer': {
+      id: '/inp-analyzer'
+      path: '/inp-analyzer'
+      fullPath: '/inp-analyzer'
+      preLoaderRoute: typeof InpAnalyzerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/swmm/rpt': {
+      id: '/api/swmm/rpt'
+      path: '/api/swmm/rpt'
+      fullPath: '/api/swmm/rpt'
+      preLoaderRoute: typeof ApiSwmmRptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/swmm/inp': {
+      id: '/api/swmm/inp'
+      path: '/api/swmm/inp'
+      fullPath: '/api/swmm/inp'
+      preLoaderRoute: typeof ApiSwmmInpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  InpAnalyzerRoute: InpAnalyzerRoute,
+  ApiSwmmInpRoute: ApiSwmmInpRoute,
+  ApiSwmmRptRoute: ApiSwmmRptRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
