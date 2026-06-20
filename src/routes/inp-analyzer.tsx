@@ -1,9 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import jsPDF from "jspdf";
+import {
+  AlertTriangle,
+  ChevronRight,
+  FileText,
+  FolderTree,
+  Info,
+  ListTree,
+  XCircle,
+} from "lucide-react";
 
 import type { InpDocument, RptDocument } from "@/lib/swmm/types";
 import { SAMPLE_INP } from "@/lib/swmm/sample";
+import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
+
+// Logical groupings for SWMM .inp sections so users can scan by domain.
+const INP_GROUPS: { label: string; sections: string[] }[] = [
+  { label: "Project", sections: ["TITLE", "OPTIONS", "REPORT", "FILES", "EVAPORATION", "TEMPERATURE", "ADJUSTMENTS"] },
+  { label: "Climatology", sections: ["RAINGAGES", "TIMESERIES", "PATTERNS"] },
+  { label: "Hydrology", sections: ["SUBCATCHMENTS", "SUBAREAS", "INFILTRATION", "AQUIFERS", "GROUNDWATER", "SNOWPACKS", "HYDROGRAPHS", "LID_CONTROLS", "LID_USAGE"] },
+  { label: "Hydraulics — Nodes", sections: ["JUNCTIONS", "OUTFALLS", "DIVIDERS", "STORAGE"] },
+  { label: "Hydraulics — Links", sections: ["CONDUITS", "PUMPS", "ORIFICES", "WEIRS", "OUTLETS", "XSECTIONS", "TRANSECTS", "LOSSES"] },
+  { label: "Quality", sections: ["POLLUTANTS", "LANDUSES", "BUILDUP", "WASHOFF", "COVERAGES", "LOADINGS", "TREATMENT"] },
+  { label: "Controls & Inflows", sections: ["CONTROLS", "INFLOWS", "DWF", "RDII", "HYDROGRAPHS"] },
+  { label: "Map & Geometry", sections: ["MAP", "COORDINATES", "VERTICES", "POLYGONS", "SYMBOLS", "LABELS", "BACKDROP"] },
+];
 
 export const Route = createFileRoute("/inp-analyzer")({
   head: () => ({
